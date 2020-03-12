@@ -1,0 +1,7 @@
+.idea/
+
+digit/data/*
+digit/experiments/*
+
+imdb/data/*
+imdb/experiments/*
