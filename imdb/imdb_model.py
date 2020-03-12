@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from tensorflow.contrib.slim.nets import resnet_v1
-
+import numpy as np
 
 class Imdb_model():
 
@@ -33,10 +33,10 @@ class Imdb_model():
         self.logits, self.z = self.build_net(self.x, self.is_training)
         self.z = tf.squeeze(self.z, [1, 2])
 
-        d_bar = tf.random_shuffle(self.d)
+        c_bar = tf.random_shuffle(self.c)
 
-        joint = tf.concat([self.d, self.z], axis=1)
-        margn = tf.concat([d_bar, self.z], axis=1)
+        joint = tf.concat([self.c, self.z], axis=1)
+        margn = tf.concat([c_bar, self.z], axis=1)
 
 
         t = self.M(joint)
@@ -140,21 +140,34 @@ class Imdb_model():
 
         return logits, z
 
+    # evaluate accuracy on a subset
+    def evaluate_model(self, sess, data, split, n_chunks=None):
 
-    # TODO SISTEMARE
-    def evaluate_model(self, sess, X, y):
-        batch_size = 1000
-        acc = 0
-        for i in range(10):
-            batch_x = X[i * batch_size: (i + 1) * batch_size] / 255.
-            batch_y = y[i * batch_size: (i + 1) * batch_size]
+        acc_ = 0.
+        loss_ = 0.
 
-            feed_dict = {self.x: batch_x,
-                         self.y: batch_y}
+        if split == 'train':
+            n_ts = len(data.tr_imgs)
+        elif split == 'test':
+            n_ts = len(data.ts_imgs)
 
-            acc += sess.run(self.accuracy, feed_dict)
 
-        return acc / 10
+        if n_chunks is None:
+            N_chunks = n_ts // self.config.batch_size
+        else:
+            N_chunks = n_chunks
+
+        for i in range(N_chunks):
+            idx_batch = range(n_ts)[i * self.config.batch_size:(i + 1) * self.config.batch_size]
+            batch_x, batch_y, __ = next(data.next_batch(idx_batch, split=split))
+
+            acc, loss = sess.run([self.accuracy, self.C_loss],
+                                 feed_dict={self.x: batch_x, self.y: batch_y, self.is_training: False})
+
+            acc_ += np.float32(acc)
+            loss_ += np.float32(loss)
+
+        return acc_ / N_chunks, loss_ / N_chunks
 
 
     def init_saver(self):

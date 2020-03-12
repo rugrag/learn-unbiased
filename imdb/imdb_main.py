@@ -15,9 +15,11 @@ def main():
     tf.reset_default_graph()
 
     dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(dir, 'data')
 
-    config = get_config(exp_dir=os.path.join(dir, 'experiments'))
+    data_dir = os.path.join(dir, 'data')
+    exp_dir = os.path.join(dir, 'experiments')
+
+    config = get_config(exp_dir=exp_dir)
 
     # set seed based on run ID
     seed = 213*config.run 
@@ -29,21 +31,24 @@ def main():
     sess = tf.Session(config=sess_config)
 
     # create your data generator
-    digit_data = Imdb_loader(data_dir, config)
+    imdb_eb1 = Imdb_loader(config, data_dir, exp='eb1', n_samples=config.tr_samples_eb1)
+    imdb_eb2 = Imdb_loader(config, data_dir, exp='eb2', n_samples=config.tr_samples_eb2)
 
+    print('eb1 N:{}'.format(imdb_eb1.N_samples))
+    print('eb2 N:{}'.format(imdb_eb2.N_samples))
     print('data loaded')
 
-    # create an instance of the model you want
+    # create an instance of the model
     model = Imdb_model(config)
 
     # create tensorboard logger
     logger = Logger(sess, config)
 
     # create trainer and pass all the previous components to it
-    trainer = Imdb_trainer(sess, model, digit_data, config, logger, data_dir)
+    trainer = Imdb_trainer(sess, model, imdb_eb1, imdb_eb2, config, logger, data_dir)
 
     # load model if exists
-    #model.load(sess)
+    model.load(sess)
 
     # here you train your model
     trainer.train()

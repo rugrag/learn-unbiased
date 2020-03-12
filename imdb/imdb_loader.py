@@ -1,80 +1,162 @@
 import numpy as np
+import numpy.random as npr
 import os
+
+from PIL import Image
 
 
 class Imdb_loader():
 
-    def __init__(self, data_dir, config):
+    def __init__(self, config, data_dir, exp, n_samples):
 
-        var = config.var
-        res = config.dim_c
+        # TODO TOGLIERE
+        data_dir = '/data/rvolpi/imdb'
 
-        filename = 'mnist_10color_jitter_var_{}.npy'.format(var)
-        filepath = os.path.join(data_dir,filename)
+        self.img_path = os.path.join(data_dir, 'imdb_crop')
+        self.config = config
 
+        # age binning according to Alvi et al.
+        self.bins = np.array([0, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 120])
 
-        data  = np.load(filepath, encoding='latin1').item()
-        
-        self.x_train = data['train_image']
-        self.y_train = data['train_label']
-        self.x_test  = data['test_image']
-        self.y_test  = data['test_label']
+        print(self.img_path)
 
+        # images
+        self.tr_imgs, self.tr_gt_dict = self.get_split(exp, split='train_list')
+        self.tr_imgs = np.array(self.tr_imgs)
 
-        self.y_train = self.convert_2_one_hot(self.y_train)
-        self.y_test  = self.convert_2_one_hot(self.y_test)
+        # generate ground truth
+        self.tr_gt = np.zeros((len(self.tr_imgs), 2))  # first column age, second column gender
 
-        __, inds = self.quantize_imgs(self.x_train, res)
-        self.c_train = self.binary_c_lab(inds, res)
-
-        __, inds = self.quantize_imgs(self.x_test, res)
-        self.c_test = self.binary_c_lab(inds, res)
-
-        self.N_samples = len(self.x_train)
+        for n, tr_img in enumerate(self.tr_imgs):
+            self.tr_gt[n, 0] = self.tr_gt_dict[tr_img.encode('utf-8')]['age']
+            self.tr_gt[n, 1] = self.tr_gt_dict[tr_img.encode('utf-8')]['gender']
 
 
-    def next_batch(self, idx_batch):
+        # shuffling - not really necessary here
+        indices = np.arange(len(self.tr_imgs), dtype=int)
+        npr.shuffle(indices)
+        self.tr_imgs = self.tr_imgs[indices[:]]
+        self.tr_gt = self.tr_gt[indices[:]]
 
-        yield self.x_train[idx_batch], self.y_train[idx_batch], self.c_train[idx_batch]
+        if n_samples != -1:
+            print('\n\n\nWARNING - USING FEW SAMPLES\n\n\n')
 
-    def convert_2_one_hot(self, y_raw):
+        # select sub-set of image split
+        self.tr_imgs = self.tr_imgs[:n_samples]
+        self.tr_gt = self.tr_gt[:n_samples]
 
-        return np.eye(10)[y_raw]
+        # ------ Test data ------
+        self.ts_imgs, self.ts_gt_dict = self.get_split(exp, split='test_list')
+        self.ts_imgs = np.array(self.ts_imgs)
 
-    # TODO METTERE COMMENTI
-    def quantize_imgs(self, imgs, bin_num=8):
-        # sub-sample image
-    
-        N  = imgs.shape[0]
-        ss = imgs.reshape((N, 784, 3))
-        q  = np.amax(ss, axis=1)
-        imgs_red = q.reshape((N, 1, 1, 3))
-    
-        # quantize colors
-        step = 256 // bin_num
-        bins = np.array(range(0, 255, step))
-    
-        inds = np.digitize(imgs_red, bins) - 1
-        imgs_qnt = bins[inds]
-    
-        return imgs_qnt, inds
+        # generate test data ground truth
+        self.ts_gt = np.zeros((len(self.ts_imgs), 2))  # first column age, second column gender
 
-    # TODO METTERE COMMENTI
-    def binary_c_lab(self, imgs, bin_num=8):
-        N_samples = imgs.shape[0]
-    
-        d_label = imgs.reshape((N_samples, -1))
-        N_pixels = d_label.shape[1]
-    
-        d_ext = np.zeros((N_samples, N_pixels * bin_num))
-    
-        for n in range(N_samples):
-            l = []
-            for i in range(N_pixels):
-                a = np.zeros(bin_num)
-                a[d_label[n, i]] = 1
-                l.append(a)
-    
-            d_ext[n] = np.concatenate(l)
-    
-        return d_ext
+        for n, ts_img in enumerate(self.ts_imgs):
+            self.ts_gt[n, 0] = self.ts_gt_dict[ts_img.encode('utf-8')]['age']
+            self.ts_gt[n, 1] = self.ts_gt_dict[ts_img.encode('utf-8')]['gender']
+
+        # shuffling - not really necessary here
+        indices = np.arange(len(self.ts_imgs), dtype=int)
+        npr.shuffle(indices)
+        self.ts_imgs = self.ts_imgs[indices[:]]
+        self.ts_gt = self.ts_gt[indices[:]]
+
+        self.N_samples = len(self.tr_imgs)
+
+
+
+    def next_batch(self, idx_batch, split='train'):
+
+        if split == 'train':
+            imgs_batch, gender_lb, age_lb = self.extract_batch(self.tr_imgs, self.tr_gt, idx_batch)
+        if split == 'test':
+            imgs_batch, gender_lb, age_lb = self.extract_batch(self.ts_imgs, self.ts_gt, idx_batch)
+
+        yield imgs_batch, gender_lb, age_lb
+
+
+    def extract_batch(self, imgs, gt, idx_batch):
+
+
+        imgs_batch = np.zeros((self.config.batch_size, 224, 224, 3), dtype=np.float64)
+        age_lb = np.zeros(self.config.batch_size, dtype=int)
+        gender_lb = np.zeros(self.config.batch_size, dtype=int)
+
+        for i, idx in enumerate(idx_batch):
+
+            #image file name to be loaded
+            img_name = imgs[idx]
+
+            # load img_name
+            try:
+                img = Image.open(os.path.join(self.img_path, img_name))
+            except:
+                # marking missing images so we can remove them later
+                age_lb[i] = -1000
+                continue
+
+            age_lb[i] = gt[idx][0]
+            gender_lb[i] = gt[idx][1]
+
+            img = img.resize((224, 224), Image.ANTIALIAS)
+            img = np.expand_dims(img, axis=0)
+
+            # if grayscale image add channels
+            if img.shape == (1, 224, 224):
+                img = np.repeat(img[:, :, :, np.newaxis], 3, axis=3)
+
+            # create images vector
+            imgs_batch[i] = img
+
+        # removing missing images and associated annotations
+        imgs_batch = imgs_batch[age_lb != -1000]
+        gender_lb = gender_lb[age_lb != -1000]
+        age_lb = age_lb[age_lb != -1000]
+
+        # ImageNet data normalization
+        imgs_batch[:, :, :, 0] -= 103.939
+        imgs_batch[:, :, :, 1] -= 116.779
+        imgs_batch[:, :, :, 2] -= 123.68
+
+        # fai i bin di age_lb
+        age_lb = self.quantize_age(age_lb, self.bins)
+
+        # one-hot gender_lb
+        gender = np.zeros((self.config.batch_size, 2))
+        for i in range(self.config.batch_size):
+            gender[i, gender_lb[i]] = 1
+
+
+        return imgs_batch, gender, age_lb
+
+    # retrieve filenames for each split
+    def get_split(self, exp, split='train_list'):
+
+        gt = np.load(os.path.join(self.img_path, 'imdb_age_gender.npy'), allow_pickle=True, encoding='latin1').item()
+
+        if self.config.exp_name == 'base' or split == 'test_list':
+            sp = np.load(os.path.join(self.img_path, 'imdb_split.npy'), allow_pickle=True, encoding='latin1').item()
+            image_list = sp[split]  # depends on whether train or test (train_list/test_list)
+
+        if exp == 'eb1' and split == 'train_list':
+            image_list = np.load(os.path.join(self.img_path, 'eb1_img_list.npy'), allow_pickle=True, encoding='latin1')
+
+        if exp == 'eb2' and split == 'train_list':
+            image_list = np.load(os.path.join(self.img_path, 'eb2_img_list.npy'), allow_pickle=True, encoding='latin1')
+
+        return image_list, gt
+
+    # get binary vector for age
+    def quantize_age(self, age_vec, bins):
+        n_samples = age_vec.shape[0]
+        n_bins = bins.shape[0] - 1
+
+        age_lb = np.zeros((n_samples, n_bins))
+        hh = np.digitize(age_vec, bins) - 1
+
+        # TODO remove for loop somehow
+        for i in range(n_samples):
+            age_lb[i, hh[i]] = 1
+
+        return age_lb
