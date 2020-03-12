@@ -55,10 +55,10 @@ class Digit_model():
         c_vars = [var for var in tvars if 'Net' in var.name]
         m_vars = [var for var in tvars if 'Mine' in var.name]
 
-        # optimizer di MINE
+        # MINE optimizer
         self.M_train_op_m = tf.train.AdamOptimizer(lr).minimize(self.M_loss, var_list=m_vars)
 
-        # optimizer di min[ loss_ce + lmb*loss_mi ]
+        # optimizer of min[ loss_ce + lmb*loss_mi ]
         M_optimizer = tf.train.AdamOptimizer(lr * lmb)
         C_optimizer = tf.train.AdamOptimizer(lr)
 
@@ -67,7 +67,6 @@ class Digit_model():
         ggm = tf.gradients(-self.M_loss, c_vars)
 
         for i, (gu, gm) in enumerate(zip(ggu, ggm)):
-            # clip
 
             if gm == None: continue
             gu_ = tf.norm(gu)
@@ -77,11 +76,13 @@ class Digit_model():
             # gradients of mi_loss are normalized
             ggm[i] = tf.multiply(g_, tf.divide(gm, gm_))
 
+        # train operations
         ga_and_vars = list(zip(ggm, c_vars))
         self.M_train_op_c = M_optimizer.apply_gradients(grads_and_vars=ga_and_vars)
 
         ggu_and_vars = list(zip(ggu, c_vars))
         self.C_train_op = C_optimizer.apply_gradients(grads_and_vars=ggu_and_vars)
+
 
     # Statistics network
     def M(self, inp, h_dim=64, reuse=False):
@@ -138,6 +139,7 @@ class Digit_model():
 
         return acc / 10
 
+    # initialize saver for model
     def init_saver(self):
         # here you initialize the tensorflow saver that will be used in saving the checkpoints.
         self.saver = tf.train.Saver(max_to_keep=5)

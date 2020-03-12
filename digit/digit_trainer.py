@@ -23,8 +23,8 @@ class Digit_trainer():
             self.train_epoch(idx_permutation)
             self.sess.run(self.model.increment_cur_epoch_tensor)
 
-        # SAVE MODEL AT THE END OF TRAINING
-        #self.model.save(self.sess)
+        # save model at the end of training
+        self.model.save(self.sess)
 
 
     def train_epoch(self, idx_permutation):

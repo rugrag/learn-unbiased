@@ -14,9 +14,11 @@ def main():
     tf.reset_default_graph()
 
     dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(dir, 'data')
 
-    config = get_config(exp_dir=os.path.join(dir, 'experiments'))
+    data_dir = os.path.join(dir, 'data')
+    exp_dir  = os.path.join(dir, 'experiments')
+
+    config = get_config(exp_dir=exp_dir)
 
     # set seed based on run ID
     seed = 213 * config.run
