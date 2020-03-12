@@ -1,7 +1,7 @@
 .idea/
 
-digit/data/*
-digit/experiments/*
+#digit/data/*
+#digit/experiments/*
 
-imdb/data/*
-imdb/experiments/*
+#imdb/data/*
+#imdb/experiments/*
