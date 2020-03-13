@@ -1,5 +1,7 @@
 # Learning Unbiased Representations via Mutual Information Backpropagation
 
+Official code for the paper xxx
+
 Dependencies:
 
 ```
