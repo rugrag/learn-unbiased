@@ -1,5 +1,5 @@
 # Digit experiment
-Download the digit dataset in form of .npy files from reference [1] and put them in the /data directory.
+Download the digit dataset in form of .npy files from https://drive.google.com/file/d/1NSv4RCSHjcHois3dXjYw_PaLIoVlLgXu/view?usp=sharing and put them in the /data directory.
 
 To run the code execute the digit_main.py file. Have a look at the digit_parser.py file to see the command line parameters.
 Results in form of tensorboard log files will be stored in the /experiments folder.
