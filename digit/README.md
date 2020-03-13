@@ -1,5 +1,7 @@
 # Digit experiment
 
+Extract the digit dataset contained in ./data
+
 To run the code, execute the digit_main.py file. Command line parameters are detailed in digit_parser.py.
 Results (tf log files) will be stored in ./experiments folder.
 
