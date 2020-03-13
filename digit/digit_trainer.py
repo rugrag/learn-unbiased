@@ -17,9 +17,9 @@ class Digit_trainer():
 
 
     def train(self):
-        '''
+        """
         Trains the model defined via config file
-        '''
+        """
         for cur_epoch in range(self.model.cur_epoch_tensor.eval(self.sess), self.config.num_epochs + 1, 1):
             self.cur_epoch = cur_epoch
             idx_permutation = npr.permutation(range(self.data.N_samples))
@@ -32,9 +32,9 @@ class Digit_trainer():
 
 
     def train_epoch(self, idx_permutation):
-        '''
-        Runs operations associated with one epoch of training
-        '''
+        """
+        Runs operations associated with one training epoch
+        """
         loop = range(self.num_iter_per_epoch -1 )
 
 
@@ -74,9 +74,9 @@ class Digit_trainer():
 
 
     def train_step(self, idx_batch, ce=True, mine=True):
-        '''
+        """
         Runs operations associated with a single training step (iteration)
-        '''
+        """
         batch_x, batch_y, batch_c = next(self.data.next_batch(idx_batch))
         batch_x = batch_x / 255.
 
@@ -97,3 +97,4 @@ class Digit_trainer():
                 feed_dict=feed_dict)
 
         return ce_loss, -mi_loss, acc
+

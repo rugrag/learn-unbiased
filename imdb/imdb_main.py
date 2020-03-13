@@ -11,7 +11,6 @@ from logger import Logger
 
 
 def main():
-    
     tf.reset_default_graph()
 
     dir = os.path.dirname(os.path.realpath(__file__))

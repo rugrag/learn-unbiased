@@ -4,8 +4,6 @@ import os
 
 parser = argparse.ArgumentParser()
 
-
-
 parser.add_argument('--exp_name',                   default='eb1',                                  help='base, eb1, eb2')
 parser.add_argument('--tr_samples_eb1',             default=2000,         type=int,                   help='number of samples for eb1. use -1 for all')
 parser.add_argument('--tr_samples_eb2',             default=-1,         type=int,                   help='number of samples for eb1. use -1 for all')
@@ -20,9 +18,7 @@ parser.add_argument('--lmb',                        default=0.0,        type=flo
 parser.add_argument('--run',                        default=1,          type=int,                   help='run ID')
 
 
-
 def get_config(exp_dir): #imdb/experiments
-
     config = parser.parse_args()
     config.folder_name = config.exp_name + '_lmb_' + str(float(config.lmb)) + '_iter_MI_' + str(config.num_iter_MI) + '_iter_acc_'+ str(config.num_iter_accumulation) + '_lr_M_' + str(config.lr_M)
     exp_dir = os.path.join(exp_dir, config.exp_name, config.folder_name)
@@ -59,6 +55,5 @@ def get_config(exp_dir): #imdb/experiments
         f.write('dim_z: {:d}\n'.format(config.dim_z))
         f.write('lmb: {:.8f}\n'.format(config.lmb))
         f.write('run: {:d}\n'.format(config.run))
-
 
     return config

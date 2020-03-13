@@ -27,7 +27,7 @@ class Imdb_trainer():
         """
         Initializes ResNet-50 network parameters using slim.
         """
-        # # # Restore only the layers up to logits (excluded)
+        # restoring only the layers up to logits (excluded)
         model_variables = slim.get_model_variables('resnet_v1_50')
         variables_to_restore = slim.filter_variables(model_variables,
                                                      exclude_patterns=['logits', 'bottleneck_layer', 'logit_layer'])
@@ -45,6 +45,9 @@ class Imdb_trainer():
 
 
     def train(self):
+        """
+        Trains the model defined via config file
+        """
         self.step = 0.
         for cur_epoch in range(self.model.cur_epoch_tensor.eval(self.sess), self.config.num_epochs + 1, 1):
             self.cur_epoch = cur_epoch
@@ -61,7 +64,9 @@ class Imdb_trainer():
 
 
     def train_epoch(self, idx_permutation):
-
+        """
+        Runs operations associated with one training epoch
+        """
         loop = range(self.num_iter_per_epoch - 1)
 
         # MI estimation at the begin of every epoch
@@ -102,17 +107,21 @@ class Imdb_trainer():
                 self.logger.summarize(self.step, summaries_dict=summaries_dict)
 
 
-
     def train_step(self, idx_batch):
-
+        """
+        Runs operations associated with a single training step (iteration)
+        """
         batch_x, batch_y, batch_c = next(self.data.next_batch(idx_batch))
         feed_dict = {self.model.x: batch_x, self.model.y: batch_y, self.model.c: batch_c, self.model.is_training: True}
 
         self.sess.run([self.model.C_train_op, self.model.update_ops], feed_dict=feed_dict)
         self.sess.run([self.model.M_train_op_c, self.model.update_ops], feed_dict=feed_dict)
 
-    def evaluate_mi(self, N_chunks=10):
 
+    def evaluate_mi(self, N_chunks=10):
+        """
+        Evaluates the Mutual Information between features and bias
+        """
         mi_ = 0
         for i in range(N_chunks):
             idx_batch = range(6000)[i * self.config.batch_size:(i + 1) * self.config.batch_size]
@@ -122,10 +131,10 @@ class Imdb_trainer():
                          self.model.is_training: False}
 
             mi_ += self.sess.run(self.model.M_loss, feed_dict=feed_dict)
-        return - mi_ / N_chunks  # "-" due to sign issues
+        return - mi_ / N_chunks
+
 
     def accumulated_MI_step(self):
-
         for i in range(self.config.num_iter_accumulation):
             idx_batch = np.random.choice(self.index_list, self.config.batch_size)
             batch_x, batch_y, batch_c = next(self.data.next_batch(idx_batch))

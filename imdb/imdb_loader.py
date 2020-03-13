@@ -6,11 +6,8 @@ from PIL import Image
 
 
 class Imdb_loader():
-
     def __init__(self, config, data_dir, exp, n_samples):
-
-        # TODO TOGLIERE
-        data_dir = '/data/rvolpi/imdb'
+        data_dir = 'PATH/TO/DATA/FOLDER'
 
         self.img_path = os.path.join(data_dir, 'imdb_crop')
         self.config = config
@@ -18,9 +15,7 @@ class Imdb_loader():
         # age binning according to Alvi et al.
         self.bins = np.array([0, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 120])
 
-        print(self.img_path)
-
-        # images
+        # train data
         self.tr_imgs, self.tr_gt_dict = self.get_split(exp, split='train_list')
         self.tr_imgs = np.array(self.tr_imgs)
 
@@ -31,21 +26,17 @@ class Imdb_loader():
             self.tr_gt[n, 0] = self.tr_gt_dict[tr_img.encode('utf-8')]['age']
             self.tr_gt[n, 1] = self.tr_gt_dict[tr_img.encode('utf-8')]['gender']
 
-
-        # shuffling - not really necessary here
+        # shuffling
         indices = np.arange(len(self.tr_imgs), dtype=int)
         npr.shuffle(indices)
         self.tr_imgs = self.tr_imgs[indices[:]]
         self.tr_gt = self.tr_gt[indices[:]]
 
-        if n_samples != -1:
-            print('\n\n\nWARNING - USING FEW SAMPLES\n\n\n')
-
         # select sub-set of image split
         self.tr_imgs = self.tr_imgs[:n_samples]
         self.tr_gt = self.tr_gt[:n_samples]
 
-        # ------ Test data ------
+        # test data
         self.ts_imgs, self.ts_gt_dict = self.get_split(exp, split='test_list')
         self.ts_imgs = np.array(self.ts_imgs)
 
@@ -56,7 +47,7 @@ class Imdb_loader():
             self.ts_gt[n, 0] = self.ts_gt_dict[ts_img.encode('utf-8')]['age']
             self.ts_gt[n, 1] = self.ts_gt_dict[ts_img.encode('utf-8')]['gender']
 
-        # shuffling - not really necessary here
+        # shuffling
         indices = np.arange(len(self.ts_imgs), dtype=int)
         npr.shuffle(indices)
         self.ts_imgs = self.ts_imgs[indices[:]]
@@ -65,9 +56,7 @@ class Imdb_loader():
         self.N_samples = len(self.tr_imgs)
 
 
-
     def next_batch(self, idx_batch, split='train'):
-
         if split == 'train':
             imgs_batch, gender_lb, age_lb = self.extract_batch(self.tr_imgs, self.tr_gt, idx_batch)
         if split == 'test':
@@ -77,14 +66,14 @@ class Imdb_loader():
 
 
     def extract_batch(self, imgs, gt, idx_batch):
-
-
+        """
+        Load batch from list of filenames
+        """
         imgs_batch = np.zeros((self.config.batch_size, 224, 224, 3), dtype=np.float64)
         age_lb = np.zeros(self.config.batch_size, dtype=int)
         gender_lb = np.zeros(self.config.batch_size, dtype=int)
 
         for i, idx in enumerate(idx_batch):
-
             #image file name to be loaded
             img_name = imgs[idx]
 
@@ -127,12 +116,13 @@ class Imdb_loader():
         for i in range(self.config.batch_size):
             gender[i, gender_lb[i]] = 1
 
-
         return imgs_batch, gender, age_lb
 
-    # retrieve filenames for each split
-    def get_split(self, exp, split='train_list'):
 
+    def get_split(self, exp, split='train_list'):
+        """
+        Retrieve filenames for each split
+        """
         gt = np.load(os.path.join(self.img_path, 'imdb_age_gender.npy'), allow_pickle=True, encoding='latin1').item()
 
         if self.config.exp_name == 'base' or split == 'test_list':
@@ -147,16 +137,19 @@ class Imdb_loader():
 
         return image_list, gt
 
-    # get binary vector for age
+
     def quantize_age(self, age_vec, bins):
+        """
+        Get binary vector associated with age value
+        """
         n_samples = age_vec.shape[0]
         n_bins = bins.shape[0] - 1
 
         age_lb = np.zeros((n_samples, n_bins))
         hh = np.digitize(age_vec, bins) - 1
 
-        # TODO remove for loop somehow
         for i in range(n_samples):
             age_lb[i, hh[i]] = 1
 
         return age_lb
+
