@@ -1,5 +1,4 @@
 # Digit experiment
-Download the digit dataset in form of .npy files from https://drive.google.com/file/d/1NSv4RCSHjcHois3dXjYw_PaLIoVlLgXu/view?usp=sharing and put them in the /data directory.
 
 To run the code, execute the digit_main.py file. Command line parameters are detailed in digit_parser.py.
 Results (tf log files) will be stored in ./experiments folder.
