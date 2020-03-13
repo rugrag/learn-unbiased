@@ -1,5 +1,6 @@
-# learn unbiased representations via mutual information backpropagation
+# Learn unbiased representations via mutual information backpropagation
 
+code for the paper LINK_TO_ARXIV
 
 Dependencies:
 
