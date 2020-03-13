@@ -3,9 +3,7 @@ import os
 
 
 class Digit_loader():
-
     def __init__(self, data_dir, config):
-
         var = config.var
         res = config.dim_c
 
@@ -30,18 +28,17 @@ class Digit_loader():
 
         self.N_samples = len(self.x_train)
 
-    def next_batch(self, idx_batch):
 
+    def next_batch(self, idx_batch):
         yield self.x_train[idx_batch], self.y_train[idx_batch], self.c_train[idx_batch]
 
-    def convert_2_one_hot(self, y_raw):
 
+    def convert_2_one_hot(self, y_raw):
         return np.eye(10)[y_raw]
 
-    # TODO METTERE COMMENTI
+
     def quantize_imgs(self, imgs, bin_num=8):
         # sub-sample image
-
         N = imgs.shape[0]
         ss = imgs.reshape((N, 784, 3))
         q = np.amax(ss, axis=1)
@@ -50,13 +47,12 @@ class Digit_loader():
         # quantize colors
         step = 256 // bin_num
         bins = np.array(range(0, 255, step))
-
         inds = np.digitize(imgs_red, bins) - 1
         imgs_qnt = bins[inds]
 
         return imgs_qnt, inds
 
-    # TODO METTERE COMMENTI
+
     def binary_c_lab(self, imgs, bin_num=8):
         N_samples = imgs.shape[0]
 

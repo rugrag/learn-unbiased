@@ -3,7 +3,6 @@ import os
 
 
 class Logger:
-
     def __init__(self, sess, config):
         self.sess = sess
         self.config = config
@@ -13,6 +12,7 @@ class Logger:
         self.train_summary_writer = tf.summary.FileWriter(os.path.join(self.config.summary_dir), self.sess.graph)
         self.test_summary_writer = tf.summary.FileWriter(
             os.path.join(self.config.summary_dir, "test"))  # TODO maybe delete
+
 
     # it can summarize scalars and images.
     def summarize(self, step, summarizer="train", scope="", summaries_dict=None):

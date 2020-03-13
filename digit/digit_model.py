@@ -3,9 +3,7 @@ import tensorflow.contrib.slim as slim
 
 
 class Digit_model():
-
     def __init__(self, config):
-
         self.config = config
         self.build_model()
         self.init_saver()
@@ -15,14 +13,17 @@ class Digit_model():
         # init the epoch counter
         self.init_cur_epoch()
 
-    def build_model(self):
 
+    def build_model(self):
+        """
+        Defines tf graph (models + losses)
+        """
         # parameters
         lr = self.config.lr_C
         lmb = self.config.lmb
         dim_c = 3 * self.config.dim_c  # 3 color channels * resolution single channel
 
-        # PLACEHOLDER
+        # placeholders
         self.x = tf.placeholder(tf.float32, shape=[None, 28, 28, 3], name='x')
         self.y = tf.placeholder(tf.float32, shape=[None, 10], name='y')
         self.c = tf.placeholder(tf.float32, [None, dim_c], name='c')
@@ -41,14 +42,14 @@ class Digit_model():
         # MI estimation loss
         self.M_loss = -(tf.reduce_mean(t) - tf.log(tf.reduce_mean(et)))
 
-        # Task loss
+        # task loss
         self.C_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.y, logits=logits))
 
-        # Evaluate model
+        # evaluate model
         correct_pred = tf.equal(tf.argmax(logits, 1), tf.argmax(self.y, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-        # Optimizer
+        # optimizer
         self.update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         tvars = tf.trainable_variables()
 
@@ -62,12 +63,11 @@ class Digit_model():
         M_optimizer = tf.train.AdamOptimizer(lr * lmb)
         C_optimizer = tf.train.AdamOptimizer(lr)
 
-        # Gradient clipping (see Section xxx in MINE paper)
+        # gradient clipping
         ggu = tf.gradients(self.C_loss, c_vars)
         ggm = tf.gradients(-self.M_loss, c_vars)
 
         for i, (gu, gm) in enumerate(zip(ggu, ggm)):
-
             if gm == None: continue
             gu_ = tf.norm(gu)
             gm_ = tf.norm(gm)
@@ -84,9 +84,10 @@ class Digit_model():
         self.C_train_op = C_optimizer.apply_gradients(grads_and_vars=ggu_and_vars)
 
 
-    # Statistics network
     def M(self, inp, h_dim=64, reuse=False):
-
+        """
+        Defines Statistics Network (MINE)
+        """
         with tf.variable_scope('Mine', reuse=reuse):
             fc1 = slim.fully_connected(inputs=inp, num_outputs=h_dim, activation_fn=tf.nn.leaky_relu)
             fc2 = slim.fully_connected(inputs=fc1, num_outputs=h_dim, activation_fn=tf.nn.leaky_relu)
@@ -95,10 +96,11 @@ class Digit_model():
 
             return out
 
-    # feature extractor + classifier
-    def build_net(self, x, is_training):
 
-        # network architecture
+    def build_net(self, x, is_training):
+        """
+        Defines network architecture (feature extractor + classifier)
+        """
         with tf.variable_scope('Net', reuse=False):
             with slim.arg_scope([slim.fully_connected],
                                 activation_fn=tf.nn.relu):
@@ -124,8 +126,11 @@ class Digit_model():
 
         return logits, z
 
-    # TODO SISTEMARE
+
     def evaluate_model(self, sess, X, y):
+        """
+        Evalautes the model on given datapoints.
+        """
         batch_size = 1000
         acc = 0
         for i in range(10):
@@ -139,35 +144,49 @@ class Digit_model():
 
         return acc / 10
 
-    # initialize saver for model
+
     def init_saver(self):
-        # here you initialize the tensorflow saver that will be used in saving the checkpoints.
+        """
+        Initializes the tensorflow saver that will be used in saving the checkpoints.
+        """
         self.saver = tf.train.Saver(max_to_keep=5)
 
-    # save function that saves the checkpoint in the path defined in the config file
+
     def save(self, sess):
+        """
+        Saves the checkpoint in the path defined in the config file.
+        """
         print("Saving model...")
         print(self.config.checkpoint_dir, self.global_step_tensor)
         self.saver.save(sess, self.config.checkpoint_dir, self.global_step_tensor)
-        print("Model saved")
+        print("Model saved.")
 
-    # load latest checkpoint from the experiment path defined in the config file
+
     def load(self, sess):
+        """
+        Loads latest checkpoint from the experiment path defined in the config file.
+        """
         latest_checkpoint = tf.train.latest_checkpoint(self.config.checkpoint_dir)
         if latest_checkpoint:
             print("Loading model checkpoint {} ...\n".format(latest_checkpoint))
             self.saver.restore(sess, latest_checkpoint)
-            print("Model loaded")
+            print("Model loaded.")
 
-    # just initialize a tensorflow variable to use it as epoch counter
+
     def init_cur_epoch(self):
+        """
+        Initializes a tensorflow variable to use it as epoch counter.
+        """
         with tf.variable_scope('cur_epoch'):
             self.cur_epoch_tensor = tf.Variable(0, trainable=False, name='cur_epoch')
             self.increment_cur_epoch_tensor = tf.assign(self.cur_epoch_tensor, self.cur_epoch_tensor + 1)
 
-    # just initialize a tensorflow variable to use it as global step counter
+
     def init_global_step(self):
-        # DON'T forget to add the global step tensor to the tensorflow trainer
+        """
+        Initializes a tensorflow variable to use it as global step counter.
+        Do not forget to add the global step tensor to the tensorflow trainer.
+        """
         with tf.variable_scope('global_step'):
             self.global_step_tensor = tf.Variable(0, trainable=False, name='global_step')
 

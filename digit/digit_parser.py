@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--var',                 default='0.020',                           help='0.020')
 parser.add_argument('--num_epochs',          default=501,     type=int,                 help='num epochs')
 parser.add_argument('--batch_size',          default=128,     type=int,                 help='mini-batch size')
-parser.add_argument('--lr_C',                default=0.0001,     type=float,               help='learning rate')
+parser.add_argument('--lr_C',                default=0.0001,  type=float,               help='learning rate')
 parser.add_argument('--num_iter_MI',         default=40,      type=int,                 help='iterations mine update ')
 parser.add_argument('--dim_z',               default=64,      type=int,                 help='dimension bottleneck')
 parser.add_argument('--dim_c',               default=8,       type=int,                 help='number of bins for c label')
@@ -17,7 +17,6 @@ parser.add_argument('--run',                 default=1,       type=int,         
 
 
 def get_config(exp_dir): #imdb/experiments
-
     config = parser.parse_args()
     config.folder_name = 'col_' + config.var + '_lmb_' + str(float(config.lmb)) + '_iter_MI_' + str(config.num_iter_MI)
     exp_dir = os.path.join(exp_dir, config.var, config.folder_name)
@@ -52,8 +51,5 @@ def get_config(exp_dir): #imdb/experiments
         f.write('dim_z: {:d}\n'.format(config.dim_z))
         f.write('lmb: {:.8f}\n'.format(config.lmb))
         f.write('run: {:d}\n'.format(config.run))
-
-
-
 
     return config

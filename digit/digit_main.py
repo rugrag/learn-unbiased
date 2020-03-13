@@ -32,7 +32,7 @@ def main():
     # create your data generator
     digit_data = Digit_loader(data_dir, config)
 
-    print('data loaded')
+    print('Data loaded.')
 
     # create an instance of the model you want
     model = Digit_model(config)
