@@ -27,16 +27,14 @@ class Imdb_trainer():
         """
         Initializes ResNet-50 network parameters using slim.
         """
+
         # restoring only the layers up to logits (excluded)
         model_variables = slim.get_model_variables('resnet_v1_50')
         variables_to_restore = slim.filter_variables(model_variables,
                                                      exclude_patterns=['logits', 'bottleneck_layer', 'logit_layer'])
         # loading ResNet checkpoint
         restorer = tf.train.Saver(variables_to_restore)
-
-        temp = '/data/rvolpi/imdb'
-        restorer.restore(self.sess, os.path.join(temp, 'resnet_v1_50.ckpt'))
-        # restorer.restore(self.sess, os.path.join(self.data_dir, 'resnet_v1_50.ckpt'))
+        restorer.restore(self.sess, os.path.join(self.data_dir, 'resnet_v1_50.ckpt'))
 
         self.index_list = range(self.data.N_samples)
         self.num_iter_per_epoch = self.data.N_samples // self.config.batch_size

@@ -1,8 +1,12 @@
-# learn unbiased code
+# learn unbiased representations via mutual information backpropagation
 
-## Digit experiment
-Download .npy files from https://drive.google.com/file/d/1NSv4RCSHjcHois3dXjYw_PaLIoVlLgXu/view and put them in the /data directory
 
-to execute the code run the main.npy file
+Dependencies:
+
+numpy 1.16.2
+tensorflow-gpu 1.13.1
+PIL 5.4.1
+
+
 
 

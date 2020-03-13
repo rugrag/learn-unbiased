@@ -7,9 +7,8 @@ from PIL import Image
 
 class Imdb_loader():
     def __init__(self, config, data_dir, exp, n_samples):
-        data_dir = 'PATH/TO/DATA/FOLDER'
 
-        self.img_path = os.path.join(data_dir, 'imdb_crop')
+        self.img_path = data_dir
         self.config = config
 
         # age binning according to Alvi et al.
