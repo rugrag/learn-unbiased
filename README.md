@@ -1,6 +1,4 @@
-# Learning Unbiased Representations via Mutual Information Backpropagation
-
-Official code for the paper xxx
+# Official code for the paper [Learning Unbiased Representations via Mutual Information Backpropagation](https://arxiv.org/abs/2003.06430)
 
 Dependencies:
 
