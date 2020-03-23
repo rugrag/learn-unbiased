@@ -3,6 +3,7 @@
 Dependencies:
 
 ```
+python 3.5
 numpy 1.16.2
 tensorflow-gpu 1.13.1
 PIL 5.4.1
